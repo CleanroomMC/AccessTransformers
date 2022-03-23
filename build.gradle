@@ -2,41 +2,21 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '6.1.0'
     id 'com.github.ben-manes.versions' version '0.39.0'
     id 'antlr'
-    id 'org.javamodularity.moduleplugin' version '1.8.3' apply false
     id 'net.minecraftforge.gradleutils' version '2.+'
 }
 
 apply plugin: 'maven-publish'
 apply plugin: 'java-library'
 apply plugin: 'eclipse'
-apply plugin: 'org.javamodularity.moduleplugin'
 
 group 'net.minecraftforge'
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(16)
+java.toolchain.languageVersion = JavaLanguageVersion.of(8)
 
-version = gradleutils.getTagOffsetVersion()
-println('Version: ' + version)
-
-def isNonStable = { String version ->
-    def stableKeyword = ['RELEASE', 'FINAL', 'GA'].any { it -> version.toUpperCase().contains(it) }
-    def regex = /^[0-9,.v-]+(-r)?$/
-    return !stableKeyword && !(version ==~ regex)
-}
-
-dependencyUpdates {
-    rejectVersionIf {
-        isNonStable(it.candidate.version)
-    }
-}
+version = 9
 
 test {
     useJUnitPlatform()
-}
-
-sourceSets {
-    testJars
-    modlauncherImpl
 }
 
 compileJava {
@@ -69,22 +49,11 @@ jar.manifest = manifest {
             'net/minecraftforge/accesstransformer/')
 }
 
-task testsJar(type: Jar) {
-    archiveClassifier = 'testsjar'
-    from sourceSets.testJars.output
-}
-
 task sourcesJar(type: Jar) {
     dependsOn generateGrammarSource
     archiveClassifier = 'sources'
     from sourceSets.main.allSource
 }
-
-changelog {
-    fromTag '1.0'
-}
-
-build.dependsOn testsJar
 
 repositories {
     mavenLocal()
@@ -97,12 +66,9 @@ repositories {
 
 dependencies {
     testImplementation('org.junit.jupiter:junit-jupiter-api:5.7.+')
-    testImplementation('org.powermock:powermock-core:2.0+')
-    testImplementation('cpw.mods:modlauncher:9.0.4')
     testImplementation('com.google.code.gson:gson:2.8.6')
-    testImplementation(sourceSets.modlauncherImpl.output)
     testRuntimeOnly('org.junit.jupiter:junit-jupiter-engine:5.7.+')
-    testRuntimeOnly(sourceSets.testJars.runtimeClasspath)
+
     implementation('org.antlr:antlr4-runtime:4.9.1')
     implementation('net.sf.jopt-simple:jopt-simple:5.0.4')
     implementation('org.ow2.asm:asm:9.1')
@@ -110,13 +76,8 @@ dependencies {
     implementation('org.ow2.asm:asm-tree:9.1')
     implementation('org.apache.logging.log4j:log4j-api:2.11.+')
     implementation('org.apache.logging.log4j:log4j-core:2.11.+')
-    modlauncherImplImplementation('cpw.mods:modlauncher:9.0.4')
-    modlauncherImplImplementation(sourceSets.main.output)
-    antlr('org.antlr:antlr4:4.9.1')
-}
 
-jar {
-    from sourceSets.modlauncherImpl.output
+    antlr('org.antlr:antlr4:4.9.1')
 }
 
 shadowJar {
@@ -137,52 +98,7 @@ shadowJar {
 artifacts {
     archives jar
     archives sourcesJar
-    archives testsJar
     archives shadowJar
-}
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-            artifact sourcesJar
-            pom {
-                name = 'Access Transformers'
-                description = 'Transforms class member access based on specification files'
-                url = 'https://github.com/MinecraftForge/AccessTransformers'
-                scm {
-                    url = 'https://github.com/MinecraftForge/AccessTransformers'
-                    connection = 'scm:git:git://github.com/MinecraftForge/AccessTransformers.git'
-                    developerConnection = 'scm:git:git@github.com:MinecraftForge/AccessTransformers.git'
-                }
-                issueManagement {
-                    system = 'github'
-                    url = 'https://github.com/MinecraftForge/AccessTransformers/issues'
-                }
-
-                licenses {
-                    license {
-                        name = 'MIT'
-                        url = 'https://opensource.org/licenses/MIT'
-                    }
-                }
-
-                developers {
-                    developer {
-                        id = 'cpw'
-                        name = 'cpw'
-                    }
-                    developer {
-                        id = 'DemonWav'
-                        name = 'DemonWav'
-                    }
-                }
-            }
-        }
-    }
-    repositories {
-        maven gradleutils.getPublishingForgeMaven()
-    }
 }
 
 generateGrammarSource {
