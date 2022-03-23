@@ -1,10 +1,12 @@
 package net.minecraftforge.accesstransformer;
 
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.ClassNode;
 
-import java.util.*;
+import java.util.Objects;
+import java.util.Set;
 
 public class InnerClassTarget extends Target<ClassNode> {
+
     private final String innerName;
 
     public InnerClassTarget(final String className, final String innerName) {
@@ -13,25 +15,25 @@ public class InnerClassTarget extends Target<ClassNode> {
     }
 
     @Override
-    public String targetName() {
-        return this.innerName;
-    }
-    @Override
-    public String toString() {
-        int idx = innerName.lastIndexOf('$');
-        return Objects.toString(getClassName()) + " INNERCLASS " + Objects.toString(innerName.substring(idx + 1));
+    public int hashCode() {
+        return Objects.hash(getClassName(), getType(), innerName);
     }
 
     @Override
     public boolean equals(final Object obj) {
-        if (!(obj instanceof InnerClassTarget)) return false;
-        return super.equals(obj) &&
-               Objects.equals(innerName, ((InnerClassTarget)obj).innerName);
+        if (!(obj instanceof InnerClassTarget)) {return false;}
+        return super.equals(obj) && Objects.equals(innerName, ((InnerClassTarget) obj).innerName);
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(getClassName(), getType(), innerName);
+    public String toString() {
+        int idx = innerName.lastIndexOf('$');
+        return getClassName() + " INNERCLASS " + innerName.substring(idx + 1);
+    }
+
+    @Override
+    public String targetName() {
+        return this.innerName;
     }
 
     @Override
@@ -41,4 +43,5 @@ public class InnerClassTarget extends Target<ClassNode> {
             inner.access = targetFinalState.mergeWith(inner.access);
         });
     }
+
 }

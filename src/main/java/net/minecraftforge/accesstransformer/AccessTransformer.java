@@ -4,13 +4,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
-import org.objectweb.asm.*;
+import org.objectweb.asm.Opcodes;
 
-import java.util.*;
-import java.util.function.*;
-import java.util.stream.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.function.IntFunction;
+import java.util.stream.Collectors;
 
 public class AccessTransformer {
+
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Marker AXFORM_MARKER = MarkerManager.getMarker("AXFORM");
     private final Target<?> memberTarget;
@@ -22,12 +26,12 @@ public class AccessTransformer {
         this.memberTarget = target;
         this.targetAccess = modifier;
         this.targetFinalState = finalState;
-        this.origins.add(origin+":"+lineNumber);
+        this.origins.add(origin + ":" + lineNumber);
     }
 
     @SuppressWarnings("unchecked")
     public <T> Target<T> getTarget() {
-        return (Target<T>)this.memberTarget;
+        return (Target<T>) this.memberTarget;
     }
 
     public AccessTransformer mergeStates(final AccessTransformer at2, final String resourceName) {
@@ -48,25 +52,31 @@ public class AccessTransformer {
     }
 
     public <T> void applyModifier(final T node, final Class<T> type, final Set<String> privateChanged) {
-        LOGGER.debug(AXFORM_MARKER,"Transforming {} to access {} and {}", getTarget(), targetAccess, targetFinalState);
+        LOGGER.debug(AXFORM_MARKER, "Transforming {} to access {} and {}", getTarget(), targetAccess, targetFinalState);
         getTarget().apply(node, targetAccess, targetFinalState, privateChanged);
+    }
+
+    @Override
+    public String toString() {
+        return memberTarget + " " + targetAccess + " " + targetFinalState + " " + origins.stream().map(Object::toString).collect(Collectors.joining(", "));
     }
 
     public enum Modifier {
         PUBLIC(Opcodes.ACC_PUBLIC), PROTECTED(Opcodes.ACC_PROTECTED), DEFAULT(0), PRIVATE(Opcodes.ACC_PRIVATE);
-    	private static final Modifier[] lookup = new Modifier[4];
-        private final int accFlag;
+        private static final Modifier[] lookup = new Modifier[4];
 
         static {
-            Arrays.stream(Modifier.values()).forEach(m->lookup[firstBit(m.accFlag)] = m);
-        }
-
-        Modifier(final int accFlag) {
-            this.accFlag = accFlag;
+            Arrays.stream(Modifier.values()).forEach(m -> lookup[firstBit(m.accFlag)] = m);
         }
 
         private static int firstBit(int flags) {
             return flags == 0 ? 0 : firstBit(flags >>> 1) + 1;
+        }
+
+        private final int accFlag;
+
+        Modifier(final int accFlag) {
+            this.accFlag = accFlag;
         }
 
         public int mergeWith(final int access) {
@@ -76,8 +86,8 @@ public class AccessTransformer {
     }
 
     public enum FinalState {
-        LEAVE(i->i), MAKEFINAL(i->i | Opcodes.ACC_FINAL), REMOVEFINAL(i->i & ~Opcodes.ACC_FINAL), CONFLICT(i->i);
-        private IntFunction<Integer> function;
+        LEAVE(i -> i), MAKEFINAL(i -> i | Opcodes.ACC_FINAL), REMOVEFINAL(i -> i & ~Opcodes.ACC_FINAL), CONFLICT(i -> i);
+        private final IntFunction<Integer> function;
 
         FinalState(final IntFunction<Integer> function) {
             this.function = function;
@@ -88,8 +98,4 @@ public class AccessTransformer {
         }
     }
 
-    @Override
-    public String toString() {
-        return Objects.toString(memberTarget) + " " + Objects.toString(targetAccess) + " " + Objects.toString(targetFinalState) + " " + Objects.toString(origins.stream().map(Object::toString).collect(Collectors.joining(", ")));
-    }
 }

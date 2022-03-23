@@ -1,10 +1,12 @@
 package net.minecraftforge.accesstransformer;
 
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.FieldNode;
 
-import java.util.*;
+import java.util.Objects;
+import java.util.Set;
 
 public class FieldTarget extends Target<FieldNode> {
+
     private final String fieldName;
 
     public FieldTarget(String className, String fieldName) {
@@ -18,20 +20,24 @@ public class FieldTarget extends Target<FieldNode> {
     }
 
     @Override
-    public String toString() {
-        return super.toString() + " " + Objects.toString(fieldName);
+    public int hashCode() {
+        return Objects.hash(getClassName(), getType(), fieldName);
     }
 
     @Override
     public boolean equals(final Object obj) {
-        if (!(obj instanceof FieldTarget)) return false;
-        return super.equals(obj) &&
-                Objects.equals(fieldName, ((FieldTarget)obj).fieldName);
+        if (!(obj instanceof FieldTarget)) {return false;}
+        return super.equals(obj) && Objects.equals(fieldName, ((FieldTarget) obj).fieldName);
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(getClassName(), getType(), fieldName);
+    public String toString() {
+        return super.toString() + " " + fieldName;
+    }
+
+    @Override
+    public String targetName() {
+        return getFieldName();
     }
 
     @Override
@@ -40,12 +46,8 @@ public class FieldTarget extends Target<FieldNode> {
         node.access = targetFinalState.mergeWith(node.access);
     }
 
-    @Override
-    public String targetName() {
-        return getFieldName();
-    }
-
     public String getFieldName() {
         return fieldName;
     }
+
 }

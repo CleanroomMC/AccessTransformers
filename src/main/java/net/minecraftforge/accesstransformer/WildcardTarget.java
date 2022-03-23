@@ -1,33 +1,26 @@
 package net.minecraftforge.accesstransformer;
 
-import org.objectweb.asm.*;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.MethodNode;
 
-import java.util.*;
+import java.util.Objects;
+import java.util.Set;
 
 public class WildcardTarget extends Target<ClassNode> {
+
     private final TargetType type;
 
     public WildcardTarget(String targetName, boolean isMethod) {
         super(targetName);
         this.type = isMethod ? TargetType.METHOD : TargetType.FIELD;
     }
+
+    // We target CLASS because we process ClassNodes
     @Override
-    // We target CLASS because we process classnodes
     public TargetType getType() {
         return TargetType.CLASS;
-    }
-
-    @Override
-    public String toString() {
-        return Objects.toString(getClassName()) + " " + type + "WILDCARD";
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (!(obj instanceof WildcardTarget)) return false;
-        return super.equals(obj) &&
-                ((WildcardTarget)obj).type == type;
     }
 
     @Override
@@ -36,8 +29,21 @@ public class WildcardTarget extends Target<ClassNode> {
     }
 
     @Override
+    public boolean equals(final Object obj) {
+        if (!(obj instanceof WildcardTarget)) {
+            return false;
+        }
+        return super.equals(obj) && ((WildcardTarget) obj).type == type;
+    }
+
+    @Override
+    public String toString() {
+        return getClassName() + " " + type + "WILDCARD";
+    }
+
+    @Override
     public String targetName() {
-        return "*"+ type + "*";
+        return "*" + type + "*";
     }
 
     @Override
@@ -53,9 +59,10 @@ public class WildcardTarget extends Target<ClassNode> {
                 mn.access = targetAccess.mergeWith(mn.access);
                 mn.access = targetFinalState.mergeWith(mn.access);
                 if (wasPrivate && !"<init>".equals(mn.name) && (mn.access & Opcodes.ACC_PRIVATE) != Opcodes.ACC_PRIVATE) {
-                    privateChanged.add(mn.name+mn.desc);
+                    privateChanged.add(mn.name + mn.desc);
                 }
             }
         }
     }
+
 }

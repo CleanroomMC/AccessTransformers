@@ -1,6 +1,7 @@
 package net.minecraftforge.accesstransformer;
 
 public class IdentityNameHandler implements INameHandler {
+
     @Override
     public String translateClassName(final String className) {
         return className;
@@ -20,4 +21,5 @@ public class IdentityNameHandler implements INameHandler {
     public String toString() {
         return "Identity NameHandler";
     }
+
 }

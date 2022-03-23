@@ -1,10 +1,11 @@
 package net.minecraftforge.accesstransformer;
 
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.ClassNode;
 
-import java.util.*;
+import java.util.Set;
 
 public class ClassTarget extends Target<ClassNode> {
+
     public ClassTarget(final String className) {
         super(className);
     }
@@ -24,4 +25,5 @@ public class ClassTarget extends Target<ClassNode> {
             inner.access = targetFinalState.mergeWith(inner.access);
         });
     }
+
 }
